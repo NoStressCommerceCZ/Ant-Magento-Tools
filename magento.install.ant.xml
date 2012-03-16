@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Ant Magento Tools
+  
+  Licence: OSLv3 http://www.opensource.org/licenses/osl-3.0.php
+  Author: Jaromir Muller, info@nostresscommerce.cz
+  
+-->
+<project name="AMT_Magento_Installer" default="build" basedir=".">
+ 
+  <target name="magento.show.properties">
+    <echo>MySQL HOST            : ${mysql.host}</echo>
+    <echo>MySQL User            : ${mysql.user}</echo>
+    <echo>MySQL Db name         : ${mysql.db}</echo>
+    <echo>Magento deploy path   : ${magento.deploy_path}</echo>
+    <echo>Magento source path   : ${magento.source_path}</echo>
+    <echo>${magento.installer.license_agreement_accepted}</echo>
+    <echo>${magento.installer.locale}</echo>
+    <echo>${magento.installer.timezone}</echo>
+    <echo>${magento.installer.default_currency}</echo>
+    <echo>${magento.installer.db_host}</echo>
+    <echo>${magento.installer.db_name}</echo>
+    <echo>${magento.installer.db_user}</echo>
+    <echo>${magento.installer.db_pass}</echo>
+    <echo>Magento URL           : ${magento.installer.url}</echo>
+    <echo>${magento.installer.use_rewrites}</echo>
+    <echo>${magento.installer.use_secure}</echo>
+    <echo>${magento.installer.secure_base_url}</echo>
+    <echo>${magento.installer.use_secure_admin}</echo>
+    <echo>${magento.installer.admin_firstname}</echo>
+    <echo>${magento.installer.admin_lastname}</echo>
+    <echo>${magento.installer.admin_email}</echo>
+    <echo>Magento admin user    : ${magento.installer.admin_username}</echo>
+    <echo>Magento admin password: ${magento.installer.admin_password}</echo>
+    <echo>${magento.installer.encryption_key}</echo>
+    <echo>${magento.installer.session_save}</echo>
+    <echo>${magento.installer.skip_url_validation}</echo>
+  </target>
+  
+  <target name="magento.source.deploy">
+    <mkdir dir="${magento.deploy_path}"/>
+    <copy todir="${magento.deploy_path}">
+      <fileset dir="${magento.source_path}"/>
+    </copy>
+  </target>
+ 
+  <target name="magento.app.etc.local.xml.check">
+      <available property="magento.app.etc.local.xml.exists" file="${magento.deploy_path}/app/etc/local.xml"/>
+  </target>
+ 
+  <!--
+  http://www.magentocommerce.com/wiki/groups/227/command_line_installation_wizard
+  -->
+  <target name="magento.installer" depends="magento.app.etc.local.xml.check" unless="magento.app.etc.local.xml.exists">
+  
+    <echo>Creating database ${mysql.db}</echo>
+  
+    <!-- let's drop existing database and create new database -->  
+    <exec executable="${mysql.bin}">
+      <arg value="-h${mysql.host}"/>
+      <arg value="-u${mysql.user}"/>
+      <arg value="-p${mysql.pass}"/>
+      <arg value='-e DROP DATABASE IF EXISTS ${mysql.db}'/>
+    </exec>
+    <exec executable="${mysql.bin}">
+      <arg value="-h${mysql.host}"/>
+      <arg value="-u${mysql.user}"/>
+      <arg value="-p${mysql.pass}"/>
+      <arg value='-e CREATE DATABASE ${mysql.db}'/>
+    </exec>
+  
+  <!-- 
+    <tstamp/>
+    <move file="${magento.deploy_path}/app/etc/local.xml" tofile="${magento.deploy_path}/app/etc/local.xml.{$touch.time}" failonerror="no" />
+  -->
+  
+    <echo>Installing Magento</echo>
+    
+    <exec dir="${magento.deploy_path}" executable="${php.bin}">
+      <arg line='install.php 
+        --license_agreement_accepted "${magento.installer.license_agreement_accepted}"
+        --locale "${magento.installer.locale}"
+        --timezone "${magento.installer.timezone}"
+        --default_currency "${magento.installer.default_currency}"
+        --db_host "${magento.installer.db_host}"
+        --db_name "${magento.installer.db_name}"
+        --db_user "${magento.installer.db_user}"
+        --db_pass "${magento.installer.db_pass}"
+        --url "${magento.installer.url}"
+        --use_rewrites "${magento.installer.use_rewrites}"
+        --use_secure "${magento.installer.use_secure}"
+        --secure_base_url "${magento.installer.secure_base_url}"
+        --use_secure_admin "${magento.installer.use_secure_admin}"
+        --admin_firstname "${magento.installer.admin_firstname}"
+        --admin_lastname "${magento.installer.admin_lastname}"
+        --admin_email "${magento.installer.admin_email}"
+        --admin_username "${magento.installer.admin_username}"
+        --admin_password "${magento.installer.admin_password}"
+        --encryption_key "${magento.installer.encryption_key}" 
+        --session_save "${magento.installer.session_save}"
+        --skip_url_validation "${magento.installer.skip_url_validation}"'
+      />
+    </exec>
+    
+    <antcall target="magento.show.properties" />
+    
+  </target>
+ 
+ <target name="magento.cache.clean">
+  <!-- in case when magento cache is in files -->
+  <delete>
+    <fileset dir="${magento.deploy_path}/var/cache" />
+  </delete>
+ </target>
+ 
+ <target name="magento.build">
+    <antcall target="magento.source.deploy" />
+    <antcall target="magento.installer" />
+ </target>
+ 
+</project>
