@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+http://ant.apache.org
+
+ANT BUILD SCRIPT
+
+On Linux just install ant package trough your favorite package manager
+
+On Windows you can use great instalator provided on URL
+  http://code.google.com/p/winant/downloads/list
+
+ -->
+<project name="Db_restore" default="build">
+
+  <property name="db.remote.host" value="remoteserver" />
+	<property name="db.remote.user" value="remoteuser" />
+	<property name="db.remote.pass" value="remotepassword" />
+	<property name="db.remote.name" value="remotedatabasename" />
+
+	<property name="db.host" value="127.0.0.1" />
+	<property name="db.user" value="root" />
+	<property name="db.pass" value="toor" />
+	<property name="db.local.name" value="localdatabase" />
+  
+  <!-- in case of Windows -->
+  <property name="mysql.client" value="mysql.exe" />
+  <property name="mysql.admin" value="mysqladmin.exe" />
+  <property name="mysql.dump" value="mysqldump.exe" />
+  
+  <!-- in case of Linux -->
+  <!--
+  <property name="mysql.client" value="mysql" />
+  <property name="mysql.admin" value="mysqladmin" />
+  <property name="mysql.dump" value="mysqldump" />
+  -->
+  
+  <target name="dump" description="dump a database from remote server to your local machine">
+       <exec executable="${mysql.dump}" failonerror="false" output="${db.remote.name}.sql">
+        <arg value="--user=${db.remote.user}" />
+        <arg value="--password=${db.remote.pass}" />
+        <arg value="--host=${db.remote.host}" />
+        <arg value="--single-transaction" />
+        <arg value="${db.remote.name}"/>
+      </exec>
+  </target>
+  
+	<target name="build">
+    <antcall target="usage" ></antcall>
+  </target>
+
+  <target name="usage">
+    <echo>
+      ant -f db.restore.xml restore
+    </echo>
+  </target>
+  
+  <target name="restore" depends="dump" description="restore dumped remove database in your local">
+     
+      <echo>Old DB Drop</echo>
+      <exec executable="${mysql.admin}" failonerror="false">
+        <arg value="--user=${db.user}"/>
+        <!--arg value="- -password=${db.pass}"/-->
+        <arg value="--force"/>
+        <arg value="drop"/>
+        <arg value="${db.local.name}"/>
+      </exec>
+      
+      <echo>Create empty DB</echo>
+      <exec executable="${mysql.admin}">
+        <arg value="--user=${db.user}"/>
+        <!--arg value="- -password=${db.pass}"/-->
+        <arg value="--force"/>
+        <arg value="create"/>
+        <arg value="${db.local.name}"/>
+      </exec>
+      
+      <echo>Restoring ${db.remote.name}.sql</echo>
+      <exec executable="${mysql.client}" input="${db.remote.name}.sql">
+        <arg value="--user=${db.user}"/>
+        <!--arg value="- -password=${db.pass}"/-->
+        <arg value="${db.local.name}"/>
+      </exec>
+      
+  	  <echo>Done.</echo>
+
+  </target>
+
+</project>
