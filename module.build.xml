@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+http://ant.apache.org
+
+ANT BUILD SCRIPT
+
+On Linux just install ant package trough your favorite package manager.
+
+On Windows you can use great instalator provided on URL
+  http://code.google.com/p/winant/downloads/list
+
+ -->
+<project name="Module_Build" default="build">
+
+  <!-- put a module name here -->
+  <property name="module_name" value="Module_Name" />
+  <!-- if you want to overwrite old files with every copy comment then set true -->
+  <property name="copy_overwrite" value="false">
+
+	<target name="build">
+    <antcall target="usage" ></antcall>
+  </target>
+
+  <target name="usage">
+    <echo>
+      USAGE: ${module_name} deploy script
+    
+      ant -f build.xml usage    -- shows this help message
+      ant -f build.xml check    -- shows set deploy directory
+      ant -f build.xml deploy -Ddeploy_dir=/any/path   -- deploys module's code to deployment directory
+    </echo>
+  </target>
+  
+  <target name="check">
+    <echo>
+      Base dir:     ${basedir}
+        -- here we are
+      Deploy dir:   ${deploy_dir}
+        -- there will be module deployed
+    </echo>
+  </target>
+  
+  <target name="deploy" description="${module_name}: deploys module's code">
+    <echo>${module_name}</echo>
+    <copy todir="${deploy_dir}" verbose="true" overwrite="${copy_overwrite}">
+		  <fileset dir=".">
+		    <include name="**/*"/>
+		    <exclude name="build.xml"/>
+		  </fileset>
+		</copy>
+  </target>
+  
+</project>
